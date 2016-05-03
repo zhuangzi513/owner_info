@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.Vector;
 
 import org.htmlparser.NodeFilter;
 import org.htmlparser.Parser;
@@ -33,11 +34,13 @@ public class ReadHtml {
     final private static int TYPE_WEB   = 2;
 
     final String mStringUrl;
-    InputStreamReader mInputStreamReader;
-    BufferedReader mBufferReader;
+    private InputStreamReader mInputStreamReader;
+    private BufferedReader mBufferReader;
+    private Vector mSharesInfos;
 
     public static void main(String[] args)  {
-        ReadHtml testReadHtml = new ReadHtml("30.phtml", TYPE_LOCAL);
+        //ReadHtml testReadHtml = new ReadHtml("30.phtml", TYPE_LOCAL);
+        ReadHtml testReadHtml = new ReadHtml("http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CirculateStockHolder/stockid/000581/displaytype/30.phtml", TYPE_WEB);
         testReadHtml.parseHtml();
     }
 
@@ -55,12 +58,32 @@ public class ReadHtml {
         } catch(IOException e) {
             e.printStackTrace();
         }
+
+        mSharesInfos = new Vector();
     }
 
     public ReadHtml(String url, int type) {
         mStringUrl = url;
         mType = type;
         init();
+    }
+
+    private int appedToShareInfos(String date, TableColumn[] td) {
+        mSharesInfos.add(date);
+        for (int k = 0; k< td.length; k++) {
+            //System.out.println(td[k].childAt(0).toString());
+            mSharesInfos.add(td[k].childAt(0).getChildren().elementAt(0).getText());
+        }
+
+        for (int k = 0; k < mSharesInfos.size(); ++k) {
+             System.out.println(">> " + mSharesInfos.get(k));
+        }
+
+        return mSharesInfos.size();
+    }
+
+    public Vector getSharesInfos() {
+        return mSharesInfos;
     }
 
     public void parseHtml() {
@@ -92,14 +115,16 @@ public class ReadHtml {
                     //System.out.println(tag.getChildrenHTML());
                     TableRow[] rows =tag.getRows();
                     //循环读取每一行
+                    String date = "";
                     for (int j = 0; j <rows.length; j++) {
                          TableRow tr =(TableRow) rows[j];
                          TableColumn[] td =tr.getColumns();
                          //读取每行的单元格内容
                          if (td.length == 5 && mState == BUSY_COUNTING) {
-                             for (int k = 0; k< td.length; k++) {
-                                 System.out.println(td[k].getStringText());//（按照自己需要的格式输出）
-                             }
+                             appedToShareInfos(date, td);
+                             //for (int k = 0; k< td.length; k++) {
+                             //    System.out.println(td[k].getStringText());//（按照自己需要的格式输出）
+                             //}
                          } else if (mState == BEGIN_COUNTING) {
                              mState = BUSY_COUNTING;
                          }
@@ -107,7 +132,8 @@ public class ReadHtml {
                          if (td.length == 2) {
                              ++mState;
                              if (mState == PREPARE_COUNTING) {
-                               System.out.println("mState: " + mState + td[1].getStringText());//（按照自己需要的格式输出）
+                                 date = td[1].getStringText();
+                                 System.out.println("mState: " + mState + date);//（按照自己需要的格式输出）
                              }
                              continue;
                          } else if (td.length == 1) {

@@ -1,2 +1,2 @@
 #!/bin/bash
-javac -cp ".:org.htmlparser.jar" ReadHtml.java
+javac -cp ".:org.htmlparser.jar" OwnerShareBuilder.java ReadHtml.java

@@ -3,7 +3,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Vector;
 
 import org.htmlparser.NodeFilter;
@@ -36,22 +38,26 @@ public class ReadHtml {
     final String mStringUrl;
     private InputStreamReader mInputStreamReader;
     private BufferedReader mBufferReader;
-    private Vector mSharesInfos;
+    private Vector<String> mSharesInfos;
+
+    private static String URL_PRE = "http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CirculateStockHolder/stockid/";
+    private static String URL_POS = "/displaytype/30.phtml";
 
     public static void main(String[] args)  {
-        //ReadHtml testReadHtml = new ReadHtml("30.phtml", TYPE_LOCAL);
-        ReadHtml testReadHtml = new ReadHtml("http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CirculateStockHolder/stockid/000581/displaytype/30.phtml", TYPE_WEB);
-        testReadHtml.parseHtml();
+        //for (int i = 0; i < 2000; ++i) {
+             ReadHtml testReadHtml = new ReadHtml("http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CirculateStockHolder/stockid/000581/displaytype/30.phtml", TYPE_WEB);
+             testReadHtml.parseHtml();
+        //}
     }
 
     private void init() {
         try {
             if (mType == TYPE_WEB) {
                 URL tmpURLInstance = new URL(mStringUrl);
-                mInputStreamReader = new InputStreamReader(tmpURLInstance.openStream());
+                mInputStreamReader = new InputStreamReader(tmpURLInstance.openStream(), "gb2312");
             } else if (mType == TYPE_LOCAL) {
                 File tmpFile = new File(mStringUrl);
-                mInputStreamReader = new InputStreamReader(new FileInputStream(tmpFile));
+                mInputStreamReader = new InputStreamReader(new FileInputStream(tmpFile), "gb2312");
             }
 
             mBufferReader = new BufferedReader(mInputStreamReader); 
@@ -59,7 +65,7 @@ public class ReadHtml {
             e.printStackTrace();
         }
 
-        mSharesInfos = new Vector();
+        mSharesInfos = new Vector<String>();
     }
 
     public ReadHtml(String url, int type) {
@@ -71,13 +77,16 @@ public class ReadHtml {
     private int appedToShareInfos(String date, TableColumn[] td) {
         mSharesInfos.add(date);
         for (int k = 0; k< td.length; k++) {
-            //System.out.println(td[k].childAt(0).toString());
             mSharesInfos.add(td[k].childAt(0).getChildren().elementAt(0).getText());
         }
 
-        for (int k = 0; k < mSharesInfos.size(); ++k) {
-             System.out.println(">> " + mSharesInfos.get(k));
+        String tmpShareInfo[] = new String[6];
+        for (int k = mSharesInfos.size() - 1; k >= mSharesInfos.size() -6 ; --k) {
+             tmpShareInfo[k%6] = mSharesInfos.get(k);
+             System.out.println(">> K: "  + k + " " + tmpShareInfo[k%6]);
         }
+
+        OwnerShareBuilder.buildOwnerShareItem(tmpShareInfo);
 
         return mSharesInfos.size();
     }
@@ -101,7 +110,7 @@ public class ReadHtml {
         //使用后HTML Parser 控件
         Parser tmpParser;
         NodeList nodeList = null;
-        tmpParser = Parser.createParser(htmlContent, "utf-8");
+        tmpParser = Parser.createParser(htmlContent, "unicode");
         //TODO: Maybe need to modify to fit the html
         NodeFilter tableFilter = new HasAttributeFilter("id", "CirculateShareholderTable");
         OrFilter lastFilter = new OrFilter();

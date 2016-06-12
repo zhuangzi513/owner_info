@@ -32,23 +32,24 @@ public class ReadHtml {
     final private static int BUSY_COUNTING = 3;;
 
     private int mType = 0;
-    final private static int TYPE_LOCAL = 1;
-    final private static int TYPE_WEB   = 2;
+    final public static int TYPE_LOCAL = 1;
+    final public static int TYPE_WEB   = 2;
 
     final String mStringUrl;
     private InputStreamReader mInputStreamReader;
     private BufferedReader mBufferReader;
     private Vector<String> mSharesInfos;
+    private Vector<OwnerShareBuilder.OwnerShareItem> mOwnerShareItems;
 
     private static String URL_PRE = "http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CirculateStockHolder/stockid/";
     private static String URL_POS = "/displaytype/30.phtml";
 
-    public static void main(String[] args)  {
-        //for (int i = 0; i < 2000; ++i) {
-             ReadHtml testReadHtml = new ReadHtml("http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CirculateStockHolder/stockid/000581/displaytype/30.phtml", TYPE_WEB);
-             testReadHtml.parseHtml();
-        //}
-    }
+    //public static void main(String[] args)  {
+    //    //for (int i = 0; i < 2000; ++i) {
+    //         ReadHtml testReadHtml = new ReadHtml("http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CirculateStockHolder/stockid/000581/displaytype/30.phtml", TYPE_WEB);
+    //         testReadHtml.parseHtml();
+    //    //}
+    //}
 
     private void init() {
         try {
@@ -66,12 +67,23 @@ public class ReadHtml {
         }
 
         mSharesInfos = new Vector<String>();
+        mOwnerShareItems = new Vector<OwnerShareBuilder.OwnerShareItem>();
     }
 
     public ReadHtml(String url, int type) {
         mStringUrl = url;
         mType = type;
         init();
+    }
+
+    public int insertIntoTable(String dbName) {
+        OwnerShareBuilder.OwnerSharesRecord sharesRecord = OwnerShareBuilder.buildOwnerSharesRecord(mOwnerShareItems);
+        SharesInfoDBHelper sharesInfoDBHelper = new SharesInfoDBHelper(dbName, "root", "123456");
+        sharesInfoDBHelper.connectDB();
+        sharesInfoDBHelper.executeInsert(sharesRecord);
+        sharesInfoDBHelper.dispose();
+
+        return 1;
     }
 
     private int appedToShareInfos(String date, TableColumn[] td) {
@@ -83,10 +95,12 @@ public class ReadHtml {
         String tmpShareInfo[] = new String[6];
         for (int k = mSharesInfos.size() - 1; k >= mSharesInfos.size() -6 ; --k) {
              tmpShareInfo[k%6] = mSharesInfos.get(k);
-             System.out.println(">> K: "  + k + " " + tmpShareInfo[k%6]);
+             //System.out.println(">> K: "  + k + " " + tmpShareInfo[k%6]);
         }
 
-        OwnerShareBuilder.buildOwnerShareItem(tmpShareInfo);
+        //System.out.println(">> >> >> >>\n");
+
+        mOwnerShareItems.add(OwnerShareBuilder.buildOwnerShareItem(tmpShareInfo));
 
         return mSharesInfos.size();
     }
@@ -157,5 +171,6 @@ public class ReadHtml {
         } catch (ParserException e) {
             e.printStackTrace();
         }
+
     }
 }

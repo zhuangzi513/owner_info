@@ -11,9 +11,11 @@ public class SharesInfoDBHelper {
     private static final String DELETE_TABLE_SQL_FORMAT = "DROP TABLE IF EXISTS shares_info";
     private static final String CREATE_DATABASE_SQL_FORMAT = "CREATE DATABASE %s CHARACTER SET 'utf8' COLLATE 'utf8_general_ci'";
     private static final String DELETE_DATABASE_SQL_FORMAT = "DROP DATABASE IF EXISTS %s";
+    private static final String SELECT_OWNER_SHARES_ITEMS = "SELECT * FROM shares_info LIMIT %d,%d";
 
     private static final int MAX_CONNECT_TRIES = 5;
     private static final String DB_DIR = "jdbc:mysql://127.0.0.1:3306/";
+    private static final String DB_URL_POST = "?useUnicode=true&characterEncoding=utf-8";
     private static final String TABLE_NAME = "shares_info";
     private static final String USER_NAME = "root";
     private static final String PASS_WD = "123456";
@@ -23,7 +25,7 @@ public class SharesInfoDBHelper {
     public SharesInfoDBHelper(String dir, String dbName, String userName, String passwd) {
         mDBDir = dir;
         mDBName = dbName;
-        mDBUrl = mDBDir + mDBName;
+        mDBUrl = mDBDir + mDBName + DB_URL_POST;
         mUserName = userName;
         mPasswd = passwd;
         mTryConnectTimes = 0;
@@ -94,7 +96,7 @@ public class SharesInfoDBHelper {
                 return true;
             } catch (SQLException se) {
                 se.printStackTrace();
-                System.out.println("Fail to connect mysql server");
+                //System.out.println("Fail to connect mysql server");
                 //throw my Exception;
                 return false;
             } catch (ClassNotFoundException e) {
@@ -155,7 +157,28 @@ public class SharesInfoDBHelper {
         }
     }
 
+    public void getTopTwoOwnerSharesRecord(OwnerShareBuilder.OwnerSharesRecord newRecord, OwnerShareBuilder.OwnerSharesRecord preRecord) {
+        String getNewOwnerSharesRecord = String.format(SELECT_OWNER_SHARES_ITEMS, 0, 10);
+        ResultSet newOwnerShareItems = executeQuery(getNewOwnerSharesRecord);
+        newRecord = OwnerShareBuilder.buildOwnerSharesRecordFromQueryResult(newRecord, newOwnerShareItems);
+
+        String getPreOwnerSharesRecord = String.format(SELECT_OWNER_SHARES_ITEMS, 10, 10);
+        ResultSet preOwnerShareItems = executeQuery(getPreOwnerSharesRecord);
+        preRecord = OwnerShareBuilder.buildOwnerSharesRecordFromQueryResult(preRecord, preOwnerShareItems);
+
+        return;
+    }
+
     public ResultSet executeQuery(String sql) {
+        connectDB();
+        try {
+            if (mDBConnection != null) {
+                Statement queryStmt = mDBConnection.createStatement();
+                return queryStmt.executeQuery(sql);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 

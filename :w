@@ -1,0 +1,123 @@
+import java.sql.*;
+//import OwnerShareBuilder;
+//import OwnerShareBuilder.OwnerSharesRecord;
+//import OwnerShareBuilder.OwnerShareItem;
+
+public class SharesInfoDBHelper {
+    private static final String INSERT_SQL = "INSERT INTO shares_info (Date, Ranking, Shares, Ratio, OwnerName) VALUES(?, ?, ?, ?, ?)";
+    private static final String INSERT_SQL = "CREATE DATABSE"
+    private static final String DB_DIR = "jdbc:mysql://127.0.0.1:3306/";
+
+    public SharesInfoDBHelper(String dir, String dbName, String userName, String passwd) {
+        mDBDir = dir;
+        mDBName = dbName;
+        mDBUrl = mDBDir + mDBName;
+        mUserName = userName;
+        mPasswd = passwd;
+    }
+
+    public SharesInfoDBHelper(String dbName, String userName, String passwd) {
+        this(DB_DIR, dbName, userName, passwd);
+    }
+
+    public boolean connect() {
+        try {   
+            Class.forName("com.mysql.jdbc.Driver");
+            mDBConnection = DriverManager.getConnection(mDBUrl, mUserName, mPasswd);
+        } catch (MySQLSyntaxErrorException e) {
+            tryCreateDatabase();
+            connect();
+        } catch (SQLException se){   
+            System.out.println("数据库连接失败！");   
+            se.printStackTrace() ;   
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        if (mDBConnection != null) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private void tryCreateDatabase() /*throw MyException*/{
+        if (mServerConnection != null) {
+            try {
+                Statement createDBStmt = mServerConnection.createStatement();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        if (mServerConnection == null) {
+            try {
+                Class.forName("com.mysql.jdbc.Driver");
+                mServerConnection = DriverManager.getConnection(mDBDir, mUserName, mPasswd);
+            } catch (SQLException se) {
+                System.out.println("Fail to connect mysql server");
+                //throw my Exception;
+                return;
+            }
+        }
+
+        try {
+            Statement createDBStmt = mServerConnection.createStatement();
+            String createDBSql = "CREATE DATABSE " + mDBName;
+            createDBStmt.executeUpdate(createDBSql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void dispose() {
+        try {
+            if (mDBConnection != null) {
+                mDBConnection.close();
+            }
+        } catch (SQLException e) {
+        }
+    }
+
+    public ResultSet executeQuery(String sql) {
+        return null;
+    }
+
+    public boolean executeInsert(OwnerShareBuilder.OwnerSharesRecord ownerSharesRecod) {
+        OwnerShareBuilder.OwnerShareItem singleShareItem = null;
+
+        try {
+            PreparedStatement insertStatement = mDBConnection.prepareStatement(INSERT_SQL);
+            for (int k = 0; k < ownerSharesRecod.size(); ++k) {
+                 singleShareItem = ownerSharesRecod.get(k);
+                 insertStatement.setString(1, singleShareItem.mDate);
+                 insertStatement.setInt(2, singleShareItem.mRanking);
+                 insertStatement.setInt(3, singleShareItem.mShares);
+                 insertStatement.setFloat(4, singleShareItem.mShareRatio);
+                 insertStatement.setString(5, singleShareItem.mOwnerName);
+                 insertStatement.addBatch();
+            }
+
+            insertStatement.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return false;
+    }
+
+    public boolean executeDelete(String sql) {
+        return false;
+    }
+
+    public boolean executeUpdate(String sql) {
+        return false;
+    }
+
+    private Connection mDBConnection;
+    private Connection mServerConnection;
+    private String mDBDir;
+    private String mDBName;
+    private String mDBUrl;
+    private String mUserName;
+    private String mPasswd;
+};

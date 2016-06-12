@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.Vector;
+import java.sql.*;
 
 public class OwnerShareBuilder {
     public final static class OwnerShareItem {
@@ -55,7 +56,7 @@ public class OwnerShareBuilder {
         }
 
         public int size() {
-            return mSize;
+            return mOwnerShareItems.size();
         }
 
         public OwnerShareItem get(int index) {
@@ -65,10 +66,38 @@ public class OwnerShareBuilder {
         public String toSQLFormatString() {
             return null;
         }
+    }
 
-        public OwnerSharesRecord fromSQLResult() {
+    public static OwnerSharesRecord buildOwnerSharesRecordFromQueryResult(OwnerSharesRecord outRecord, final ResultSet queryResult) {
+        if (queryResult == null) {
+            System.out.println("Try to buildOwnerSharesRecordFromQueryResult with null queryResult");
             return null;
         }
+        //TODO: 10 is hard coded
+        OwnerShareItem ownerShareItem = null; 
+
+        try {
+            while (queryResult.next()) {
+                ownerShareItem = buildOwnerShareItemsFromQueryResult(queryResult);
+                outRecord.addOwnerShareItem(ownerShareItem);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return outRecord;
+    }
+
+    public static OwnerShareItem buildOwnerShareItemsFromQueryResult(final ResultSet queryResult) {
+        try {
+            OwnerShareItem tmpItem = new OwnerShareItem(queryResult.getString(1), queryResult.getInt(2), queryResult.getInt(3), queryResult.getFloat(4), queryResult.getString(5));
+            //tmpItem.dump();
+            return tmpItem;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
     public static OwnerSharesRecord buildOwnerSharesRecord(final Vector<OwnerShareItem> items) {

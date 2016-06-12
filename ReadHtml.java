@@ -88,8 +88,16 @@ public class ReadHtml {
 
     private int appedToShareInfos(String date, TableColumn[] td) {
         mSharesInfos.add(date);
-        for (int k = 0; k< td.length; k++) {
-            mSharesInfos.add(td[k].childAt(0).getChildren().elementAt(0).getText());
+        try {
+            for (int k = 0; k< td.length; k++) {
+                String origin = td[k].childAt(0).getChildren().elementAt(0).getText();
+                String utf8 = new String(origin.getBytes("utf-8"),"utf-8");
+                //mSharesInfos.add(td[k].childAt(0).getChildren().elementAt(0).getText());
+                mSharesInfos.add(utf8);
+            }
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return -1;
         }
 
         String tmpShareInfo[] = new String[6];
@@ -156,7 +164,7 @@ public class ReadHtml {
                              ++mState;
                              if (mState == PREPARE_COUNTING) {
                                  date = td[1].getStringText();
-                                 System.out.println("mState: " + mState + date);//（按照自己需要的格式输出）
+                                 //System.out.println("mState: " + mState + date);//（按照自己需要的格式输出）
                              }
                              continue;
                          } else if (td.length == 1) {

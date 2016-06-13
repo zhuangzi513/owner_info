@@ -169,6 +169,18 @@ public class SharesInfoDBHelper {
         return;
     }
 
+    public void getPreTwoOwnerSharesRecord(OwnerShareBuilder.OwnerSharesRecord newRecord, OwnerShareBuilder.OwnerSharesRecord preRecord) {
+        String getNewOwnerSharesRecord = String.format(SELECT_OWNER_SHARES_ITEMS, 10, 10);
+        ResultSet newOwnerShareItems = executeQuery(getNewOwnerSharesRecord);
+        newRecord = OwnerShareBuilder.buildOwnerSharesRecordFromQueryResult(newRecord, newOwnerShareItems);
+
+        String getPreOwnerSharesRecord = String.format(SELECT_OWNER_SHARES_ITEMS, 20, 10);
+        ResultSet preOwnerShareItems = executeQuery(getPreOwnerSharesRecord);
+        preRecord = OwnerShareBuilder.buildOwnerSharesRecordFromQueryResult(preRecord, preOwnerShareItems);
+
+        return;
+    }
+
     public ResultSet executeQuery(String sql) {
         connectDB();
         try {

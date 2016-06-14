@@ -16,6 +16,7 @@ import org.htmlparser.filters.OrFilter;
 import org.htmlparser.tags.TableColumn;
 import org.htmlparser.tags.TableRow;
 import org.htmlparser.tags.TableTag;
+import org.htmlparser.tags.LinkTag;
 import org.htmlparser.util.NodeList;
 import org.htmlparser.util.ParserException;
 
@@ -25,11 +26,13 @@ import org.htmlparser.util.ParserException;
  *
  */
 public class ReadHtml {
+    private static String DEFAULT_VALUE_FOR_ALL_TYPES = "-1";
     private int mState = 0;
     final private static int START_NEW_RECORD = 0;
     final private static int PREPARE_COUNTING = 1;;
     final private static int BEGIN_COUNTING = 2;;
-    final private static int BUSY_COUNTING = 3;;
+    final private static int START_COUNTING = 3;;
+    final private static int BUSY_COUNTING = 6;;
 
     private int mType = 0;
     final public static int TYPE_LOCAL = 1;
@@ -41,8 +44,10 @@ public class ReadHtml {
     private Vector<String> mSharesInfos;
     private Vector<OwnerShareBuilder.OwnerShareItem> mOwnerShareItems;
 
-    private static String URL_PRE = "http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CirculateStockHolder/stockid/";
-    private static String URL_POS = "/displaytype/30.phtml";
+    //private static String URL_PRE = "http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CirculateStockHolder/stockid/";
+    //private static String URL_POS = "/displaytype/30.phtml";
+    private static String URL_PRE = "http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_StockHolder/stockid/";
+    private static String URL_POS = ".phtml";
 
     //public static void main(String[] args)  {
     //    //for (int i = 0; i < 2000; ++i) {
@@ -88,17 +93,28 @@ public class ReadHtml {
 
     private int appedToShareInfos(String date, TableColumn[] td) {
         mSharesInfos.add(date);
-        try {
-            for (int k = 0; k< td.length; k++) {
-                String origin = td[k].childAt(0).getChildren().elementAt(0).getText();
-                String utf8 = new String(origin.getBytes("utf-8"),"utf-8");
-                //mSharesInfos.add(td[k].childAt(0).getChildren().elementAt(0).getText());
-                mSharesInfos.add(utf8);
+        //try {
+            for (int k = 0; k < td.length; k++) {
+                String origin = null;
+                if (td[k].childAt(0).getChildren().elementAt(0) instanceof LinkTag) {
+                    origin = ((LinkTag)td[k].childAt(0).getChildren().elementAt(0)).getLinkText();//（按照自己需要的格式输出）
+                } else {
+                    origin = td[k].childAt(0).getChildren().elementAt(0).getText();
+                }
+                //String utf8 = new String(origin.getBytes("utf-8"),"utf-8");
+                if (origin.indexOf("&nbsp") >= 0) {
+                    origin = origin.substring(0, origin.indexOf("&nbsp"));
+                    if (origin.isEmpty()) {
+                        origin = DEFAULT_VALUE_FOR_ALL_TYPES;
+                    }
+                }
+
+                mSharesInfos.add(origin);
             }
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            return -1;
-        }
+        //} catch (UnsupportedEncodingException e) {
+        //    e.printStackTrace();
+        //    return -1;
+        //}
 
         String tmpShareInfo[] = new String[6];
         for (int k = mSharesInfos.size() - 1; k >= mSharesInfos.size() -6 ; --k) {
@@ -116,6 +132,99 @@ public class ReadHtml {
     public Vector getSharesInfos() {
         return mSharesInfos;
     }
+
+    public boolean validateInfo(TableColumn[] td) {
+        String firstItem = td[0].childAt(0).getChildren().elementAt(0).getText();
+        if (firstItem.length() <= 2
+            && Integer.parseInt(firstItem) <= 10) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public void parseHtml() {
+        //获取html转换成String
+        String htmlString;
+        String htmlContent = "";
+        try {
+            while((htmlString = mBufferReader.readLine()) != null) {
+                htmlContent = htmlContent + htmlString;
+            }
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+
+        //使用后HTML Parser 控件
+        Parser tmpParser;
+        NodeList nodeList = null;
+        tmpParser = Parser.createParser(htmlContent, "unicode");
+        //TODO: Maybe need to modify to fit the html
+        NodeFilter tableFilter = new HasAttributeFilter("id", "Table1");
+        OrFilter lastFilter = new OrFilter();
+        lastFilter.setPredicates(new NodeFilter[] { tableFilter });
+        try {
+           nodeList = tmpParser.parse(lastFilter);
+           //循环读取每个table
+           for (int i = 0; i <=nodeList.size(); i++) {
+                if (nodeList.elementAt(i)instanceof TableTag) {
+                    TableTag tag = (TableTag)nodeList.elementAt(i);
+                    TableRow[] rows =tag.getRows();
+                    //循环读取每一行
+                    String date = "";
+                    for (int j = 0; j <rows.length; j++) {
+                         TableRow tr =(TableRow) rows[j];
+                         TableColumn[] td =tr.getColumns();
+                         //读取每行的单元格内容
+                         if (td.length == 5 && mState == BUSY_COUNTING) {
+                             //System.out.println("mState: " + mState);//（按照自己需要的格式输出）
+                             if (!validateInfo(td)) {
+                                 continue;
+                             }
+                             //for (int k = 0; k < td.length; k++) {
+                             //    if (td[k].childAt(0) != null
+                             //        && td[k].childAt(0).getChildren() != null
+                             //        && td[k].childAt(0).getChildren().elementAt(0) != null) {
+                             //        if (td[k].childAt(0).getChildren().elementAt(0) instanceof LinkTag) {
+                             //            System.out.println("k: " + k + " " + ((LinkTag)td[k].childAt(0).getChildren().elementAt(0)).getLinkText());//（按照自己需要的格式输出）
+                             //        } else {
+                             //            System.out.println("k: " + k + " " + td[k].childAt(0).getChildren().elementAt(0).getText());
+                             //        }
+                             //    }
+                             //}
+                             appedToShareInfos(date, td);
+                         } else if (mState == BEGIN_COUNTING) {
+                             //System.out.println("mState: set BUSY_COUNTING, " + mState + date);//（按照自己需要的格式输出）
+                             mState = START_COUNTING;
+                         }
+
+                         if (td.length == 2) {
+                             ++mState;
+                             //System.out.println("mState: " + mState + date);//（按照自己需要的格式输出）
+                             if (mState == PREPARE_COUNTING) {
+                                 date = td[1].getStringText();
+                                 //System.out.println("mState: " + mState + date);//（按照自己需要的格式输出）
+                             }
+                             continue;
+                         } else if (td.length == 1) {
+                             mState = START_NEW_RECORD;
+                             //System.out.println("mState: " + mState);//（按照自己需要的格式输出）
+                             continue;
+                         }
+                    }
+
+                } else {
+                    System.out.println("nodeList.elementAt("+ i +"): not table");
+                }
+
+            }
+        } catch (ParserException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+/*
 
     public void parseHtml() {
         //获取html转换成String
@@ -181,4 +290,5 @@ public class ReadHtml {
         }
 
     }
+*/
 }

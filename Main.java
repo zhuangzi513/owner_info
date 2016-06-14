@@ -2,8 +2,10 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class Main {
-    private static String URL_PRE = "http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CirculateStockHolder/stockid/";
-    private static String URL_POS = "/displaytype/30.phtml";
+    //private static String URL_PRE = "http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CirculateStockHolder/stockid/";
+    //private static String URL_POS = ".phtml";
+    private static String URL_PRE = "http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_StockHolder/stockid/";
+    private static String URL_POS = ".phtml";
     private static Map<String, Integer> S_TARGET_RESULTS_ORIGIN = new LinkedHashMap<String, Integer>();
     private static Map<String, Integer> S_TARGET_RESULTS_SORTED = new LinkedHashMap<String, Integer>();
 
@@ -94,13 +96,24 @@ public class Main {
         String finalUrl = null;
         String stockId = null;
         ReadHtml tmpHtmlReader = null;
+        for ( int i = 21; i < 22; ++i) {
+             stockId = String.format("%06d", i);
+             finalUrl = URL_PRE + stockId + URL_POS;
+             System.out.println("finalUrl: " + finalUrl);
+             tmpHtmlReader = new ReadHtml(finalUrl, ReadHtml.TYPE_WEB);
+             tmpHtmlReader.parseHtml();
+             //tmpHtmlReader.insertIntoTable("Y" + stockId);
+        }
 
+
+/*
         for ( int i = 0; i < 1000; ++i) {
              stockId = String.format("%06d", i);
              finalUrl = URL_PRE + stockId + URL_POS;
+             System.out.println("finalUrl: " + finalUrl);
              tmpHtmlReader = new ReadHtml(finalUrl, ReadHtml.TYPE_WEB);
              tmpHtmlReader.parseHtml();
-             tmpHtmlReader.insertIntoTable("Y" + stockId);
+             tmpHtmlReader.insertIntoTable("R" + stockId);
         }
 
         for ( int i = 2000 ; i < 3000; ++i) {
@@ -108,26 +121,27 @@ public class Main {
              finalUrl = URL_PRE + stockId + URL_POS;
              tmpHtmlReader = new ReadHtml(finalUrl, ReadHtml.TYPE_WEB);
              tmpHtmlReader.parseHtml();
-             tmpHtmlReader.insertIntoTable("Y" + stockId);
+             tmpHtmlReader.insertIntoTable("R" + stockId);
         }
         for ( int i = 300000; i < 301000; ++i) {
              stockId = String.format("%06d", i);
              finalUrl = URL_PRE + stockId + URL_POS;
              tmpHtmlReader = new ReadHtml(finalUrl, ReadHtml.TYPE_WEB);
              tmpHtmlReader.parseHtml();
-             tmpHtmlReader.insertIntoTable("Y" + stockId);
+             tmpHtmlReader.insertIntoTable("R" + stockId);
         }
         for ( int i = 600000; i < 602000; ++i) {
              stockId = String.format("%06d", i);
              finalUrl = URL_PRE + stockId + URL_POS;
              tmpHtmlReader = new ReadHtml(finalUrl, ReadHtml.TYPE_WEB);
              tmpHtmlReader.parseHtml();
-             tmpHtmlReader.insertIntoTable("Y" + stockId);
+             tmpHtmlReader.insertIntoTable("R" + stockId);
         }
+*/
     }
 
     public static void main(String[] args) {
-        getFlesh();
-        //parseHtml();
+        //getFlesh();
+        parseHtml();
     }
 }

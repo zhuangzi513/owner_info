@@ -7,7 +7,7 @@ public class SharesInfoDBHelper {
     private static final String INSERT_SQL = "INSERT INTO shares_info (Date, Ranking, Shares, Ratio, OwnerName) VALUES(?, ?, ?, ?, ?)";
     private static final String CHECK_TABLE_SQL_PRE = "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '";
     private static final String CHECK_TABLE_SQL_FORMAT = "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '%s' AND table_name = '%s'"; 
-    private static final String CREATE_TABLE_SQL_FORMAT = "CREATE TABLE IF NOT EXISTS shares_info (Date varchar(10),  Ranking int, Shares int, Ratio float, OwnerName varchar(50)) DEFAULT CHARSET=utf8";
+    private static final String CREATE_TABLE_SQL_FORMAT = "CREATE TABLE IF NOT EXISTS shares_info (Date varchar(10),  Ranking int, Shares bigint, Ratio float, OwnerName varchar(100)) DEFAULT CHARSET=utf8";
     private static final String DELETE_TABLE_SQL_FORMAT = "DROP TABLE IF EXISTS shares_info";
     private static final String CREATE_DATABASE_SQL_FORMAT = "CREATE DATABASE %s CHARACTER SET 'utf8' COLLATE 'utf8_general_ci'";
     private static final String DELETE_DATABASE_SQL_FORMAT = "DROP DATABASE IF EXISTS %s";
@@ -204,6 +204,7 @@ public class SharesInfoDBHelper {
 
         OwnerShareBuilder.OwnerShareItem singleShareItem = null;
         try {
+            mDBConnection.setAutoCommit(false);
             PreparedStatement insertStatement = mDBConnection.prepareStatement(INSERT_SQL);
             for (int k = 0; k < ownerSharesRecord.size(); ++k) {
                  singleShareItem = ownerSharesRecord.get(k);
@@ -216,6 +217,8 @@ public class SharesInfoDBHelper {
             }
 
             insertStatement.executeBatch();
+            mDBConnection.commit();
+            System.out.println(ownerSharesRecord.size() + " records inserted");
             return true;
         } catch (SQLException e) {
             e.printStackTrace();

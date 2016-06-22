@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -78,10 +79,12 @@ public class Main {
              getSumOfFlesh("Y" + stockId);
         }
  
+/*
         for ( int i = 300000 ; i < 301000; ++i) {
              stockId = String.format("%06d", i);
              getSumOfFlesh("Y" + stockId);
         }
+*/
  
         for ( int i = 600000 ; i < 602000; ++i) {
              stockId = String.format("%06d", i);
@@ -92,56 +95,75 @@ public class Main {
         dumpResults();
     }
 
+    private static boolean doParseAndInsert(String stockId, int type) {
+        try {
+            String finalUrl = URL_PRE + stockId + URL_POS;
+            ReadHtml tmpHtmlReader = new ReadHtml(finalUrl, ReadHtml.TYPE_WEB);
+            if (tmpHtmlReader != null) {
+                tmpHtmlReader.parseHtml();
+                tmpHtmlReader.insertIntoTable("Y" + stockId);
+                //tmpHtmlReader.insertIntoTable("R" + stockId);
+            }
+        } catch (IOException e) {
+            return false;
+        }
+
+        return true;
+    }
+
     private static void parseHtml() {
         String finalUrl = null;
         String stockId = null;
         ReadHtml tmpHtmlReader = null;
-        for ( int i = 21; i < 22; ++i) {
-             stockId = String.format("%06d", i);
-             finalUrl = URL_PRE + stockId + URL_POS;
-             System.out.println("finalUrl: " + finalUrl);
-             tmpHtmlReader = new ReadHtml(finalUrl, ReadHtml.TYPE_WEB);
-             tmpHtmlReader.parseHtml();
-             //tmpHtmlReader.insertIntoTable("Y" + stockId);
-        }
-
-
 /*
-        for ( int i = 0; i < 1000; ++i) {
+        for ( int i = 1; i < 22; ++i) {
              stockId = String.format("%06d", i);
-             finalUrl = URL_PRE + stockId + URL_POS;
-             System.out.println("finalUrl: " + finalUrl);
-             tmpHtmlReader = new ReadHtml(finalUrl, ReadHtml.TYPE_WEB);
-             tmpHtmlReader.parseHtml();
-             tmpHtmlReader.insertIntoTable("R" + stockId);
+             if (!doParseAndInsert(stockId, ReadHtml.TYPE_WEB)) {
+                 System.out.println("skip : " + stockId);
+                 continue;
+             }
+        }
+*/
+
+
+        for ( int i = 1; i < 1000; ++i) {
+             stockId = String.format("%06d", i);
+             if (!doParseAndInsert(stockId, ReadHtml.TYPE_WEB)) {
+                 System.out.println("skip : " + stockId);
+                 continue;
+             }
         }
 
         for ( int i = 2000 ; i < 3000; ++i) {
              stockId = String.format("%06d", i);
              finalUrl = URL_PRE + stockId + URL_POS;
-             tmpHtmlReader = new ReadHtml(finalUrl, ReadHtml.TYPE_WEB);
-             tmpHtmlReader.parseHtml();
-             tmpHtmlReader.insertIntoTable("R" + stockId);
+             if (!doParseAndInsert(stockId, ReadHtml.TYPE_WEB)) {
+                 System.out.println("skip : " + stockId);
+                 continue;
+             }
         }
+
         for ( int i = 300000; i < 301000; ++i) {
              stockId = String.format("%06d", i);
              finalUrl = URL_PRE + stockId + URL_POS;
-             tmpHtmlReader = new ReadHtml(finalUrl, ReadHtml.TYPE_WEB);
-             tmpHtmlReader.parseHtml();
-             tmpHtmlReader.insertIntoTable("R" + stockId);
+             if (!doParseAndInsert(stockId, ReadHtml.TYPE_WEB)) {
+                 System.out.println("skip : " + stockId);
+                 continue;
+             }
         }
+
         for ( int i = 600000; i < 602000; ++i) {
              stockId = String.format("%06d", i);
              finalUrl = URL_PRE + stockId + URL_POS;
-             tmpHtmlReader = new ReadHtml(finalUrl, ReadHtml.TYPE_WEB);
-             tmpHtmlReader.parseHtml();
-             tmpHtmlReader.insertIntoTable("R" + stockId);
+             if (!doParseAndInsert(stockId, ReadHtml.TYPE_WEB)) {
+                 System.out.println("skip : " + stockId);
+                 continue;
+             }
         }
-*/
     }
 
     public static void main(String[] args) {
-        //getFlesh();
-        parseHtml();
+        getFlesh();
+        //parseHtml();
     }
 }

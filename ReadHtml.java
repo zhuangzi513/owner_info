@@ -27,6 +27,7 @@ import org.htmlparser.util.ParserException;
  */
 public class ReadHtml {
     private static String DEFAULT_VALUE_FOR_ALL_TYPES = "-1";
+    public static String THE_EXISTING_NEWEST_DATE = "2016-03-31";
     private int mState = 0;
     final private static int START_NEW_RECORD = 0;
     final private static int PREPARE_COUNTING = 1;;
@@ -56,37 +57,34 @@ public class ReadHtml {
     //    //}
     //}
 
-    private void init() {
-        try {
-            if (mType == TYPE_WEB) {
-                URL tmpURLInstance = new URL(mStringUrl);
-                mInputStreamReader = new InputStreamReader(tmpURLInstance.openStream(), "gb2312");
-            } else if (mType == TYPE_LOCAL) {
-                File tmpFile = new File(mStringUrl);
-                mInputStreamReader = new InputStreamReader(new FileInputStream(tmpFile), "gb2312");
-            }
-
-            mBufferReader = new BufferedReader(mInputStreamReader); 
-        } catch(IOException e) {
-            e.printStackTrace();
+    private void init() throws IOException {
+        if (mType == TYPE_WEB) {
+            URL tmpURLInstance = new URL(mStringUrl);
+            mInputStreamReader = new InputStreamReader(tmpURLInstance.openStream(), "gb2312");
+        } else if (mType == TYPE_LOCAL) {
+            File tmpFile = new File(mStringUrl);
+            mInputStreamReader = new InputStreamReader(new FileInputStream(tmpFile), "gb2312");
         }
 
+        mBufferReader = new BufferedReader(mInputStreamReader); 
         mSharesInfos = new Vector<String>();
         mOwnerShareItems = new Vector<OwnerShareBuilder.OwnerShareItem>();
     }
 
-    public ReadHtml(String url, int type) {
+    public ReadHtml(String url, int type) throws IOException {
         mStringUrl = url;
         mType = type;
         init();
     }
 
     public int insertIntoTable(String dbName) {
-        OwnerShareBuilder.OwnerSharesRecord sharesRecord = OwnerShareBuilder.buildOwnerSharesRecord(mOwnerShareItems);
-        SharesInfoDBHelper sharesInfoDBHelper = new SharesInfoDBHelper(dbName, "root", "123456");
-        sharesInfoDBHelper.connectDB();
-        sharesInfoDBHelper.executeInsert(sharesRecord);
-        sharesInfoDBHelper.dispose();
+        if (mOwnerShareItems.size() > 0) {
+            OwnerShareBuilder.OwnerSharesRecord sharesRecord = OwnerShareBuilder.buildOwnerSharesRecord(mOwnerShareItems);
+            SharesInfoDBHelper sharesInfoDBHelper = new SharesInfoDBHelper(dbName, "root", "123456");
+            sharesInfoDBHelper.connectDB();
+            sharesInfoDBHelper.executeInsert(sharesRecord);
+            sharesInfoDBHelper.dispose();
+        }
 
         return 1;
     }
@@ -192,7 +190,10 @@ public class ReadHtml {
                              //        }
                              //    }
                              //}
-                             appedToShareInfos(date, td);
+                             if (date.compareTo(THE_EXISTING_NEWEST_DATE) > 0) {
+                                 System.out.println("date: " + date + " URL: " + mStringUrl);
+                                 appedToShareInfos(date, td);
+                             }
                          } else if (mState == BEGIN_COUNTING) {
                              //System.out.println("mState: set BUSY_COUNTING, " + mState + date);//（按照自己需要的格式输出）
                              mState = START_COUNTING;
@@ -214,7 +215,7 @@ public class ReadHtml {
                     }
 
                 } else {
-                    System.out.println("nodeList.elementAt("+ i +"): not table");
+                    //System.out.println("nodeList.elementAt("+ i +"): not table");
                 }
 
             }

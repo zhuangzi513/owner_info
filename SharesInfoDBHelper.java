@@ -158,13 +158,34 @@ public class SharesInfoDBHelper {
     }
 
     public void getTopTwoOwnerSharesRecord(OwnerShareBuilder.OwnerSharesRecord newRecord, OwnerShareBuilder.OwnerSharesRecord preRecord) {
-        String getNewOwnerSharesRecord = String.format(SELECT_OWNER_SHARES_ITEMS, 0, 10);
-        ResultSet newOwnerShareItems = executeQuery(getNewOwnerSharesRecord);
-        newRecord = OwnerShareBuilder.buildOwnerSharesRecordFromQueryResult(newRecord, newOwnerShareItems);
+        String getNewOwnerSharesRecord = String.format(SELECT_OWNER_SHARES_ITEMS, 0, 20);
+        ResultSet maxOwnerShareItems = executeQuery(getNewOwnerSharesRecord);
+        OwnerShareBuilder.OwnerSharesRecord tmpRecord = new OwnerShareBuilder.OwnerSharesRecord(20);
+        if (maxOwnerShareItems != null) {
+            tmpRecord = OwnerShareBuilder.buildOwnerSharesRecordFromQueryResult(tmpRecord, maxOwnerShareItems);
 
-        String getPreOwnerSharesRecord = String.format(SELECT_OWNER_SHARES_ITEMS, 10, 10);
-        ResultSet preOwnerShareItems = executeQuery(getPreOwnerSharesRecord);
-        preRecord = OwnerShareBuilder.buildOwnerSharesRecordFromQueryResult(preRecord, preOwnerShareItems);
+            if (tmpRecord.size() > 0) {
+                String newestDate = tmpRecord.get(0).mDate;
+                newRecord.addOwnerShareItem(tmpRecord.get(0));
+                int i = 1;
+                //System.out.println("i: " + i + " new date:" + newestDate);
+                while (i < tmpRecord.size() && newestDate.equals(tmpRecord.get(i).mDate)) {
+                    newRecord.addOwnerShareItem(tmpRecord.get(i++));
+                }
+
+                if (tmpRecord.get(i) == null) {
+                    return;
+                }
+                String preDate = tmpRecord.get(i).mDate;
+                //System.out.println("i: " + i + " pre date:" + preDate);
+                preRecord.addOwnerShareItem(tmpRecord.get(i));
+                while (i < tmpRecord.size() && preDate.equals(tmpRecord.get(i).mDate)) {
+                    preRecord.addOwnerShareItem(tmpRecord.get(i++));
+                }
+            } else {
+                System.out.println("Try to getTopTwoOwnerSharesRecord, but get 0 ShareItems");
+            }
+        }
 
         return;
     }
@@ -172,17 +193,23 @@ public class SharesInfoDBHelper {
     public void getPreTwoOwnerSharesRecord(OwnerShareBuilder.OwnerSharesRecord newRecord, OwnerShareBuilder.OwnerSharesRecord preRecord) {
         String getNewOwnerSharesRecord = String.format(SELECT_OWNER_SHARES_ITEMS, 10, 10);
         ResultSet newOwnerShareItems = executeQuery(getNewOwnerSharesRecord);
-        newRecord = OwnerShareBuilder.buildOwnerSharesRecordFromQueryResult(newRecord, newOwnerShareItems);
+        if (newOwnerShareItems != null) {
+            newRecord = OwnerShareBuilder.buildOwnerSharesRecordFromQueryResult(newRecord, newOwnerShareItems);
+        }
 
         String getPreOwnerSharesRecord = String.format(SELECT_OWNER_SHARES_ITEMS, 20, 10);
         ResultSet preOwnerShareItems = executeQuery(getPreOwnerSharesRecord);
-        preRecord = OwnerShareBuilder.buildOwnerSharesRecordFromQueryResult(preRecord, preOwnerShareItems);
+        if (preOwnerShareItems != null) {
+            preRecord = OwnerShareBuilder.buildOwnerSharesRecordFromQueryResult(preRecord, preOwnerShareItems);
+        }
 
         return;
     }
 
     public ResultSet executeQuery(String sql) {
-        connectDB();
+        if (!checkTableExists()) {
+            return null;
+        }
         try {
             if (mDBConnection != null) {
                 Statement queryStmt = mDBConnection.createStatement();

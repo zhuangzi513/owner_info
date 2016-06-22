@@ -60,7 +60,11 @@ public class OwnerShareBuilder {
         }
 
         public OwnerShareItem get(int index) {
-            return mOwnerShareItems.get(index);
+            if (index < mOwnerShareItems.size()) {
+                return mOwnerShareItems.get(index);
+            }
+
+            return null;
         }
 
         public String toSQLFormatString() {
@@ -90,7 +94,7 @@ public class OwnerShareBuilder {
 
     public static OwnerShareItem buildOwnerShareItemsFromQueryResult(final ResultSet queryResult) {
         try {
-            OwnerShareItem tmpItem = new OwnerShareItem(queryResult.getString(1), queryResult.getInt(2), queryResult.getInt(3), queryResult.getFloat(4), queryResult.getString(5));
+            OwnerShareItem tmpItem = new OwnerShareItem(queryResult.getString(1), queryResult.getInt(2), queryResult.getLong(3), queryResult.getFloat(4), queryResult.getString(5));
             //tmpItem.dump();
             return tmpItem;
         } catch (SQLException e) {

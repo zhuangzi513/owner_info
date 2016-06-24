@@ -148,6 +148,43 @@ public class SharesInfoDBHelper {
         }
     }
 
+    private void recoverTheOwnerSharesRecords(OwnerShareBuilder.OwnerSharesRecord newRecord, OwnerShareBuilder.OwnerSharesRecord preRecord) {
+        int newIndex = 0, preIndex = 0;
+        OwnerShareBuilder.OwnerSharesRecord tmpRecord = new OwnerShareBuilder.OwnerSharesRecord(10);
+
+        System.out.println("newRecord.size: " + newRecord.size() + " preRecord.size: " + preRecord.size());
+        while (newIndex < newRecord.size() && preIndex < preRecord.size()) {
+            System.out.println("newIndex: " + newIndex + " preIndex: " + preIndex);
+            if (newRecord.get(newIndex).mRanking < preRecord.get(preIndex).mRanking) {
+                tmpRecord.addOwnerShareItem(newRecord.get(newIndex)); ++newIndex;
+                if (newIndex < newRecord.size() && 
+                    preRecord.get(preIndex).mRanking < newRecord.get(newIndex).mRanking) {
+                    tmpRecord.addOwnerShareItem(preRecord.get(preIndex)); ++preIndex;
+                }
+            } else if (newRecord.get(newIndex).mRanking > preRecord.get(preIndex).mRanking) {
+                tmpRecord.addOwnerShareItem(preRecord.get(preIndex)); ++preIndex;
+                if (preIndex < preRecord.size() &&
+                    newRecord.get(newIndex).mRanking < preRecord.get(preIndex).mRanking) {
+                    tmpRecord.addOwnerShareItem(newRecord.get(newIndex)); ++newIndex;
+                }
+            } else {
+                tmpRecord.addOwnerShareItem(preRecord.get(preIndex)); ++preIndex; ++newIndex;
+            }
+        }
+
+        if (newIndex < newRecord.size()) {
+            for (;newIndex < newRecord.size(); ++newIndex) {
+                 tmpRecord.addOwnerShareItem(newRecord.get(newIndex));
+            }
+        } else if (preIndex < preRecord.size()) {
+            for (;preIndex < preRecord.size(); ++preIndex) {
+                 tmpRecord.addOwnerShareItem(preRecord.get(preIndex));
+            }
+        }
+
+        //tmpRecord.dump();
+    }
+
     public void dispose() {
         try {
             if (mDBConnection != null) {
@@ -168,7 +205,6 @@ public class SharesInfoDBHelper {
                 String newestDate = tmpRecord.get(0).mDate;
                 newRecord.addOwnerShareItem(tmpRecord.get(0));
                 int i = 1;
-                //System.out.println("i: " + i + " new date:" + newestDate);
                 while (i < tmpRecord.size() && newestDate.equals(tmpRecord.get(i).mDate)) {
                     newRecord.addOwnerShareItem(tmpRecord.get(i++));
                 }
@@ -177,11 +213,15 @@ public class SharesInfoDBHelper {
                     return;
                 }
                 String preDate = tmpRecord.get(i).mDate;
-                //System.out.println("i: " + i + " pre date:" + preDate);
-                preRecord.addOwnerShareItem(tmpRecord.get(i));
                 while (i < tmpRecord.size() && preDate.equals(tmpRecord.get(i).mDate)) {
                     preRecord.addOwnerShareItem(tmpRecord.get(i++));
                 }
+
+                if (newRecord.size() != preRecord.size() || newRecord.size() < 10) {
+                    System.out.println("newRecord.size: " + newRecord.size() + " preRecord.size:" + preRecord.size());
+                    recoverTheOwnerSharesRecords(newRecord, preRecord);
+                }
+
             } else {
                 System.out.println("Try to getTopTwoOwnerSharesRecord, but get 0 ShareItems");
             }

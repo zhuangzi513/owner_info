@@ -2,16 +2,35 @@
 public class OwnerSharesHelper {
     public static int ERROR = -1;
 
-    public static int sumOfFlesh(OwnerShareBuilder.OwnerSharesRecord newRecord, OwnerShareBuilder.OwnerSharesRecord oldRecord) {
-        int flesh = 0;
-
+    private static boolean checkValidateInputsRecords(OwnerShareBuilder.OwnerSharesRecord newRecord, OwnerShareBuilder.OwnerSharesRecord oldRecord) {
         if (newRecord == null || oldRecord == null
             /*|| newRecord.size() != oldRecord.size()*/
             || newRecord.size() == 0 || oldRecord.size() == 0) {
             //System.out.println("newRecord: " + newRecord + " oldRecord: " + oldRecord);
-            return ERROR;
+            return false;
         }
 
+
+        long newSumShares = newRecord.get(0).mShares * (int)(100/newRecord.get(0).mShareRatio);
+        long oldSumShares = oldRecord.get(0).mShares * (int)(100/oldRecord.get(0).mShareRatio);
+
+        if (newSumShares - oldSumShares > 100
+            || newSumShares - oldSumShares < -100) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Compute the shares of NEW comers and the increased shares of the OLD owners
+    */
+    public static int sumOfFlesh(OwnerShareBuilder.OwnerSharesRecord newRecord, OwnerShareBuilder.OwnerSharesRecord oldRecord) {
+        if (!checkValidateInputsRecords(newRecord, oldRecord)) {
+            return -1;
+        }
+
+        int flesh = 0;
         int newSize = newRecord.size();
         int oldSize = oldRecord.size();
         boolean markAsDiff = false;
@@ -19,14 +38,6 @@ public class OwnerSharesHelper {
 
         OwnerShareBuilder.OwnerShareItem newShareItem = newRecord.get(0);
         OwnerShareBuilder.OwnerShareItem oldShareItem = oldRecord.get(0);
-
-        long newSumShares = newShareItem.mShares * (int)(100/newShareItem.mShareRatio);
-        long oldSumShares = oldShareItem.mShares * (int)(100/oldShareItem.mShareRatio);
-
-        if (newSumShares - oldSumShares > 100
-            || newSumShares - oldSumShares < -100) {
-            return 0;
-        }
 
         //TODO: performancd  need refine
         for ( int i = 0; i < newSize; ++i) {
@@ -61,6 +72,59 @@ public class OwnerSharesHelper {
         }
 
         return flesh;
+    }
+
+    /**
+     * Compute the decreased shares of the OLD owners
+    */
+    public static int sumOfDecreased(OwnerShareBuilder.OwnerSharesRecord newRecord, OwnerShareBuilder.OwnerSharesRecord oldRecord) {
+        if (!checkValidateInputsRecords(newRecord, oldRecord)) {
+            return -1;
+        }
+
+        int decreased = 0;
+        int newSize = newRecord.size();
+        int oldSize = oldRecord.size();
+        boolean markAsDiff = false;
+        boolean markAsQuit = false;
+
+        OwnerShareBuilder.OwnerShareItem newShareItem = newRecord.get(0);
+        OwnerShareBuilder.OwnerShareItem oldShareItem = oldRecord.get(0);
+
+        //TODO: performancd  need refine
+        for ( int i = 0; i < oldSize; ++i) {
+            oldShareItem = oldRecord.get(i);
+            markAsDiff = false;
+            markAsQuit = false;
+            int j = 0;
+            for (j = 0; j < newSize; ++j) {
+                newShareItem = newRecord.get(j);
+                if (isSameOwner(oldShareItem.mOwnerName, newShareItem.mOwnerName)) {
+                    markAsDiff = true;
+                    break;
+                }
+            }
+
+            if (j == newSize) {
+                markAsQuit = true;
+            }
+
+            if (markAsQuit) {
+                decreased = decreased + (int)(newShareItem.mShareRatio * 100);
+            }
+
+            if (markAsDiff) {
+                //Only positive ?
+                if ((int)(newShareItem.mShareRatio * 100) < (int)(oldShareItem.mShareRatio * 100)) {
+                    decreased = decreased + ((int)((oldShareItem.mShareRatio - newShareItem.mShareRatio) * 100));
+                } else {
+                    //TODO:maybe we will count into negtive change in the future
+                }
+            }
+        }
+
+        return decreased;
+
     }
 
     public static boolean isSameOwner(String src, String dst) {

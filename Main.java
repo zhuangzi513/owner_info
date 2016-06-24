@@ -53,7 +53,7 @@ public class Main {
     }
 
     private static void getSumOfFlesh(String databaseName) {
-        //System.out.println("beginning id: " + databaseName);
+        System.out.println("beginning id: " + databaseName);
         SharesInfoDBHelper dbHelper = new SharesInfoDBHelper(databaseName);
         OwnerShareBuilder.OwnerSharesRecord newRecord = new OwnerShareBuilder.OwnerSharesRecord(10);
         OwnerShareBuilder.OwnerSharesRecord oldRecord = new OwnerShareBuilder.OwnerSharesRecord(10);
@@ -65,6 +65,52 @@ public class Main {
             //System.out.println("TARGET: id: " + databaseName + " flesh: " + flesh);
             addToResults(databaseName, flesh);
         }
+    }
+
+    private static void getSumOfDecrease(String databaseName) {
+        SharesInfoDBHelper dbHelper = new SharesInfoDBHelper(databaseName);
+        OwnerShareBuilder.OwnerSharesRecord newRecord = new OwnerShareBuilder.OwnerSharesRecord(10);
+        OwnerShareBuilder.OwnerSharesRecord oldRecord = new OwnerShareBuilder.OwnerSharesRecord(10);
+        dbHelper.getTopTwoOwnerSharesRecord(newRecord, oldRecord);
+        int decreased = OwnerSharesHelper.sumOfDecreased(newRecord, oldRecord);
+        dbHelper.dispose();
+
+        //if (decreased > 0 && decreased < 500) {
+        //    //System.out.println("TARGET: id: " + databaseName + " flesh: " + flesh);
+        //    addToResults(databaseName, decreased);
+        //}
+
+        System.out.println("========" + decreased + "============");
+        newRecord.dump();
+        oldRecord.dump();
+    }
+
+    private static void getDecreased() {
+        String stockId = null;
+             getSumOfDecrease("R000581");
+/*
+        for ( int i = 2000 ; i < 3000; ++i) {
+             stockId = String.format("%06d", i);
+             getSumOfDecrease("Y" + stockId);
+        }
+  
+        for ( int i = 0 ; i < 1000; ++i) {
+             stockId = String.format("%06d", i);
+             getSumOfDecrease("Y" + stockId);
+        }    
+ 
+        for ( int i = 300000 ; i < 301000; ++i) {
+             stockId = String.format("%06d", i);
+             getSumOfDecrease("Y" + stockId);
+        }
+ 
+        for ( int i = 600000 ; i < 602000; ++i) {
+             stockId = String.format("%06d", i);
+             getSumOfDecrease("Y" + stockId);
+        }
+ */
+        sortByValue();
+        dumpResults();
     }
 
     private static void getFlesh() {
@@ -86,7 +132,7 @@ public class Main {
         }
 */
  
-        for ( int i = 600000 ; i < 602000; ++i) {
+        for ( int i = 600000; i < 602000; ++i) {
              stockId = String.format("%06d", i);
              getSumOfFlesh("Y" + stockId);
         }
@@ -164,6 +210,7 @@ public class Main {
 
     public static void main(String[] args) {
         getFlesh();
+        //getDecreased();
         //parseHtml();
     }
 }

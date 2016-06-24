@@ -8,14 +8,22 @@ public class OwnerShareBuilder {
         public final long mShares;
         public final float mShareRatio;
         public final String mOwnerName;
-        public final String mDate;
+        public String mDate;
 
         public OwnerShareItem(String date, int ranking, long shares, float ratio, String ownerName) {
-            mDate = date; 
-            mRanking = ranking;
-            mShares  = shares;
+            mDate       = date; 
+            mRanking    = ranking;
+            mShares     = shares;
             mShareRatio = ratio;
-            mOwnerName = ownerName;
+            mOwnerName  = ownerName;
+        }
+
+        public OwnerShareItem(OwnerShareItem srcItem) {
+            mDate       = srcItem.mDate; 
+            mRanking    = srcItem.mRanking;
+            mShares     = srcItem.mShares;
+            mShareRatio = srcItem.mShareRatio;
+            mOwnerName  = srcItem.mOwnerName;
         }
 
         public void dump() {
@@ -53,6 +61,13 @@ public class OwnerShareBuilder {
         }
 
         public void dump() {
+            for (int i = 0 ; i < mOwnerShareItems.size(); ++i) {
+                 mOwnerShareItems.get(i).dump();
+            }
+        }
+
+        public void insertElementAt(final OwnerShareItem item, int index) {
+            mOwnerShareItems.insertElementAt(item, index);
         }
 
         public int size() {

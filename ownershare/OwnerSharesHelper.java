@@ -39,6 +39,15 @@ public class OwnerSharesHelper {
         OwnerShareBuilder.OwnerShareItem newShareItem = newRecord.get(0);
         OwnerShareBuilder.OwnerShareItem oldShareItem = oldRecord.get(0);
 
+        int newSharesVolume = (int)( (newShareItem.mShares * 10000)/(int)(newShareItem.mShareRatio*10000) );
+        int oldSharesVolume = (int)( (oldShareItem.mShares * 10000)/(int)(oldShareItem.mShareRatio*10000) );
+
+        //discard of new shares
+        if (newSharesVolume - oldSharesVolume > 10000
+            || newSharesVolume - oldSharesVolume < -10000) {
+            return -1;
+        }
+
         //TODO: performancd  need refine
         for ( int i = 0; i < newSize; ++i) {
             newShareItem = newRecord.get(i);
@@ -47,8 +56,18 @@ public class OwnerSharesHelper {
             int j = 0;
             for (j = 0; j < oldSize; ++j) {
                 oldShareItem = oldRecord.get(j);
-                if (isSameOwner(oldShareItem.mOwnerName, newShareItem.mOwnerName)) {
-                    markAsDiff = true;
+                //System.out.println("Compare : " + newShareItem.mOwnerName + " & " + oldShareItem.mOwnerName);
+                if (isSameOwner(newShareItem.mOwnerName, oldShareItem.mOwnerName)) {
+                    if (oldShareItem.mShareRatio != oldShareItem.mShareRatio) {
+                        markAsDiff = true;
+                    }
+                    //System.out.println(oldShareItem.mOwnerName + " == " + newShareItem.mOwnerName);
+                    break;
+                }
+
+                //Just the owner renamed
+                if (newShareItem.mRanking == oldShareItem.mRanking
+                    && newShareItem.mShares == oldShareItem.mShares) {
                     break;
                 }
             }
@@ -58,6 +77,7 @@ public class OwnerSharesHelper {
             }
 
             if (markAsNew) {
+                //System.out.println("markAsNew:" + newShareItem.mOwnerName);
                 flesh = flesh + (int)(newShareItem.mShareRatio * 100);
             }
 
@@ -99,7 +119,7 @@ public class OwnerSharesHelper {
             int j = 0;
             for (j = 0; j < newSize; ++j) {
                 newShareItem = newRecord.get(j);
-                if (isSameOwner(oldShareItem.mOwnerName, newShareItem.mOwnerName)) {
+                if (!isSameOwner(oldShareItem.mOwnerName, newShareItem.mOwnerName)) {
                     markAsDiff = true;
                     break;
                 }
@@ -131,10 +151,13 @@ public class OwnerSharesHelper {
         int i = 0, j = 0;
         src = src.replaceAll("\\(", "");
         src = src.replaceAll("\\)", "");
+        src = src.replaceAll(" ", "");
+        src = src.replaceAll("-", "");
 
         dst = dst.replaceAll("\\(", "");
         dst = dst.replaceAll("\\)", "");
-
+        dst = dst.replaceAll(" ", "");
+        dst = dst.replaceAll("-", "");
 
         if (src.length() <= dst.length()) {
             while (i < src.length() && j < dst.length()) {
@@ -146,9 +169,12 @@ public class OwnerSharesHelper {
                 }
             }
 
-            if (j == dst.length() && i < src.length()) {
-                //System.out.println(src + " 1 NOT equals to: " + dst);
-                return false;
+            //if 80%  same, then same
+            if (j == dst.length() && i > (int)((src.length() * 8)/10)) {
+                //System.out.println(src + " equals to: " + dst);
+                return true;
+            } else if (i == src.length() && j <= dst.length()) {
+                return true;
             }
         } else {
             while (i < dst.length() && j < src.length()) {
@@ -160,17 +186,18 @@ public class OwnerSharesHelper {
                 }
             }
 
-            if (j == src.length() && i < dst.length()) {
-                //System.out.println(src + "2 NOT equals to: " + dst);
-                return false;
+            //if 80%  same, then same
+            if (j == src.length() && i > (int)((dst.length()*8)/10)) {
+                //System.out.println(src + "equals to: " + dst);
+                return true;
+            } else if (i == dst.length() && j <= src.length()) {
+                return true;
             }
         }
 
-        //if (src.length() != dst.length()) {
-        //    System.out.println(src + " equals to: " + dst);
-        //}
+        //System.out.println(src + " equals to: " + dst);
 
-        return true;
+        return false;
     }
 
     public int sumOfFlowIn(OwnerShareBuilder.OwnerSharesRecord newRecord, OwnerShareBuilder.OwnerSharesRecord oldRecord) {

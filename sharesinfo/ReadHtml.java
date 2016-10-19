@@ -22,12 +22,11 @@ import org.htmlparser.util.ParserException;
 
 /**
  * 解析HTML
- * @author chenxiaobing
  *
  */
 public class ReadHtml {
     private static String DEFAULT_VALUE_FOR_ALL_TYPES = "-1";
-    public static String THE_EXISTING_NEWEST_DATE = "2016-03-31";
+    public static String THE_EXISTING_NEWEST_DATE = "2015-03-31";
     private int mState = 0;
     final private static int START_NEW_RECORD = 0;
     final private static int PREPARE_COUNTING = 1;;
@@ -40,22 +39,16 @@ public class ReadHtml {
     final public static int TYPE_WEB   = 2;
 
     final String mStringUrl;
+    final String mStockID;
+    private String mTipSavedDate;
     private InputStreamReader mInputStreamReader;
     private BufferedReader mBufferReader;
     private Vector<String> mSharesInfos;
     private Vector<OwnerShareBuilder.OwnerShareItem> mOwnerShareItems;
+    private SharesInfoDBHelper mSharesInfoDBHelper;
 
-    //private static String URL_PRE = "http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CirculateStockHolder/stockid/";
-    //private static String URL_POS = "/displaytype/30.phtml";
     private static String URL_PRE = "http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_StockHolder/stockid/";
     private static String URL_POS = ".phtml";
-
-    //public static void main(String[] args)  {
-    //    //for (int i = 0; i < 2000; ++i) {
-    //         ReadHtml testReadHtml = new ReadHtml("http://vip.stock.finance.sina.com.cn/corp/go.php/vCI_CirculateStockHolder/stockid/000581/displaytype/30.phtml", TYPE_WEB);
-    //         testReadHtml.parseHtml();
-    //    //}
-    //}
 
     private void init() throws IOException {
         if (mType == TYPE_WEB) {
@@ -69,21 +62,23 @@ public class ReadHtml {
         mBufferReader = new BufferedReader(mInputStreamReader); 
         mSharesInfos = new Vector<String>();
         mOwnerShareItems = new Vector<OwnerShareBuilder.OwnerShareItem>();
+        mSharesInfoDBHelper = new SharesInfoDBHelper("Y" + mStockID, "root", "123456");
     }
 
-    public ReadHtml(String url, int type) throws IOException {
+    public ReadHtml(String stockId, String url, int type) throws IOException {
         mStringUrl = url;
+        mStockID = stockId;
         mType = type;
         init();
     }
 
-    public int insertIntoTable(String dbName) {
+    public int insertIntoTable() {
+        //deleteRecords();
         if (mOwnerShareItems.size() > 0) {
             OwnerShareBuilder.OwnerSharesRecord sharesRecord = OwnerShareBuilder.buildOwnerSharesRecord(mOwnerShareItems);
-            SharesInfoDBHelper sharesInfoDBHelper = new SharesInfoDBHelper(dbName, "root", "123456");
-            sharesInfoDBHelper.connectDB();
-            sharesInfoDBHelper.executeInsert(sharesRecord);
-            sharesInfoDBHelper.dispose();
+            mSharesInfoDBHelper.connectDB();
+            mSharesInfoDBHelper.executeInsert(sharesRecord);
+            mSharesInfoDBHelper.dispose();
         }
 
         return 1;
@@ -153,6 +148,14 @@ public class ReadHtml {
             e.printStackTrace();
         }
 
+        mSharesInfoDBHelper.connectDB();
+        mSharesInfoDBHelper.deleteRecords(THE_EXISTING_NEWEST_DATE);
+        OwnerShareBuilder.OwnerSharesRecord tipSharesRecord = mSharesInfoDBHelper.getTipOwnerSharesRecord();
+        if (tipSharesRecord != null && tipSharesRecord.size() > 0) {
+            mTipSavedDate = tipSharesRecord.get(0).mDate;
+        }
+        System.out.println("mTipSavedDate: " + mTipSavedDate);//（按照自己需要的格式输出）
+
         //使用后HTML Parser 控件
         Parser tmpParser;
         NodeList nodeList = null;
@@ -190,9 +193,12 @@ public class ReadHtml {
                              //        }
                              //    }
                              //}
-                             if (date.compareTo(THE_EXISTING_NEWEST_DATE) > 0) {
-                                 System.out.println("date: " + date + " URL: " + mStringUrl);
+                             if (mTipSavedDate == null || date.compareTo(mTipSavedDate) > 0) {
+                                 //System.out.println("date: " + date);
+                                 //System.out.println("mTipSavedDate: " + mTipSavedDate);
                                  appedToShareInfos(date, td);
+                             } else {
+                                 break;
                              }
                          } else if (mState == BEGIN_COUNTING) {
                              //System.out.println("mState: set BUSY_COUNTING, " + mState + date);//（按照自己需要的格式输出）

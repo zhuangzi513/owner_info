@@ -61,7 +61,7 @@ public class Main {
         int flesh = OwnerSharesHelper.sumOfFlesh(newRecord, oldRecord);
         dbHelper.dispose();
 
-        if (flesh > 1000) {
+        if (flesh > 500) {
             //System.out.println("TARGET: id: " + databaseName + " flesh: " + flesh);
             addToResults(databaseName, flesh);
         }
@@ -125,14 +125,12 @@ public class Main {
              getSumOfFlesh("Y" + stockId);
         }
  
-/*
-        for ( int i = 300000 ; i < 301000; ++i) {
+        for ( int i = 600000; i < 602000; ++i) {
              stockId = String.format("%06d", i);
              getSumOfFlesh("Y" + stockId);
         }
-*/
- 
-        for ( int i = 600000; i < 602000; ++i) {
+
+        for ( int i = 603000; i < 604000; ++i) {
              stockId = String.format("%06d", i);
              getSumOfFlesh("Y" + stockId);
         }
@@ -143,11 +141,12 @@ public class Main {
 
     private static boolean doParseAndInsert(String stockId, int type) {
         try {
+            System.out.println(stockId);
             String finalUrl = URL_PRE + stockId + URL_POS;
-            ReadHtml tmpHtmlReader = new ReadHtml(finalUrl, ReadHtml.TYPE_WEB);
+            ReadHtml tmpHtmlReader = new ReadHtml(stockId, finalUrl, ReadHtml.TYPE_WEB);
             if (tmpHtmlReader != null) {
                 tmpHtmlReader.parseHtml();
-                tmpHtmlReader.insertIntoTable("Y" + stockId);
+                tmpHtmlReader.insertIntoTable();
                 //tmpHtmlReader.insertIntoTable("R" + stockId);
             }
         } catch (IOException e) {
@@ -206,11 +205,20 @@ public class Main {
                  continue;
              }
         }
+
+        for ( int i = 603000; i < 604000; ++i) {
+             stockId = String.format("%06d", i);
+             finalUrl = URL_PRE + stockId + URL_POS;
+             if (!doParseAndInsert(stockId, ReadHtml.TYPE_WEB)) {
+                 System.out.println("skip : " + stockId);
+                 continue;
+             }
+        }
     }
 
     public static void main(String[] args) {
+        //parseHtml();
         getFlesh();
         //getDecreased();
-        //parseHtml();
     }
 }

@@ -11,7 +11,8 @@ public class SharesInfoDBHelper {
     private static final String DELETE_TABLE_SQL_FORMAT = "DROP TABLE IF EXISTS shares_info";
     private static final String CREATE_DATABASE_SQL_FORMAT = "CREATE DATABASE %s CHARACTER SET 'utf8' COLLATE 'utf8_general_ci'";
     private static final String DELETE_DATABASE_SQL_FORMAT = "DROP DATABASE IF EXISTS %s";
-    private static final String SELECT_OWNER_SHARES_ITEMS = "SELECT * FROM shares_info LIMIT %d,%d";
+    private static final String SELECT_OWNER_SHARES_ITEMS = "SELECT * FROM shares_info ORDER BY Date DESC, Ranking ASC LIMIT %d,%d";
+    private static final String DELETE_RECORDS_SQL_FORMAT = "DELETE FROM shares_info WHERE Date >= '%s'";
 
     private static final int MAX_CONNECT_TRIES = 5;
     private static final String DB_DIR = "jdbc:mysql://127.0.0.1:3306/";
@@ -72,6 +73,23 @@ public class SharesInfoDBHelper {
         return false;
     }
 
+    public boolean deleteRecords(String startingDate) {
+        connectDB();
+        if (mDBConnection != null) {
+            try {
+                String sql = String.format(DELETE_RECORDS_SQL_FORMAT, startingDate);
+                Statement deleteTableStmt = mDBConnection.createStatement();
+                deleteTableStmt.executeUpdate(sql);
+                return true;
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
+
+        return false;
+    }
+
     private boolean checkTableExists() {
         connectDB();
         if (mDBConnection != null) {
@@ -111,22 +129,39 @@ public class SharesInfoDBHelper {
         if (mDBConnection != null) {
             return true;
         }
-
-        try {   
-            Class.forName("com.mysql.jdbc.Driver");
-            mDBConnection = DriverManager.getConnection(mDBUrl, mUserName, mPasswd);
-        } catch (SQLException se){   
-            System.out.println("Fail to connect to :" + mDBUrl);   
-            if (++mTryConnectTimes < MAX_CONNECT_TRIES) {
-                System.out.println("Trying to connect Database: " + mDBName + " and connect to it again");   
+        while (mDBConnection == null &&
+               ++mTryConnectTimes < MAX_CONNECT_TRIES) {
+            if (mServerConnection == null) {
                 connectServer();
-                tryCreateDatabase();
-                connectDB();
             }
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            try {
+                Class.forName("com.mysql.jdbc.Driver");
+                mDBConnection = DriverManager.getConnection(mDBUrl, USER_NAME, PASS_WD);
+            } catch (SQLException se){
+                //sLog.log(Level.INFO, "Fail to connect to :" + mDBUrl);
+                continue;
+            } catch (ClassNotFoundException e) {
+                //sLog.log(Level.INFO, e.getMessage());
+                e.printStackTrace();
+                break;
+            }
         }
 
+//        try {   
+//            Class.forName("com.mysql.jdbc.Driver");
+//            mDBConnection = DriverManager.getConnection(mDBUrl, mUserName, mPasswd);
+//        } catch (SQLException se){   
+//            System.out.println("Fail to connect to :" + mDBUrl);   
+//            if (++mTryConnectTimes < MAX_CONNECT_TRIES) {
+//                System.out.println("Trying to connect Database: " + mDBName + " and connect to it again");   
+//                connectServer();
+//                tryCreateDatabase();
+//                connectDB();
+//            }
+//        } catch (ClassNotFoundException e) {
+//            e.printStackTrace();
+//        }
+//
         if (mDBConnection != null) {
             return true;
         }
@@ -244,6 +279,17 @@ public class SharesInfoDBHelper {
         }
 
         return;
+    }
+
+    public OwnerShareBuilder.OwnerSharesRecord getTipOwnerSharesRecord() {
+        String getNewOwnerSharesRecord = String.format(SELECT_OWNER_SHARES_ITEMS, 0, 10);
+        ResultSet tipOwnerShareItems = executeQuery(getNewOwnerSharesRecord);
+        OwnerShareBuilder.OwnerSharesRecord tipSharesRecord = new OwnerShareBuilder.OwnerSharesRecord(10);
+        if (tipOwnerShareItems != null) {
+            tipSharesRecord = OwnerShareBuilder.buildOwnerSharesRecordFromQueryResult(tipSharesRecord, tipOwnerShareItems);
+        }
+
+        return tipSharesRecord;
     }
 
     public ResultSet executeQuery(String sql) {

@@ -1,4 +1,3 @@
-cp */*.class .
 SET HTML_PARSER_PATH=.\htmlparser\lib
 SET MYSQL_PATH=.\libmysql
 SET JAR_SEPERATOR=;

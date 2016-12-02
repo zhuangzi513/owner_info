@@ -16,7 +16,7 @@ public class SharesInfoDBHelper {
 
     private static final int MAX_CONNECT_TRIES = 5;
     private static final String DB_DIR = "jdbc:mysql://127.0.0.1:3306/";
-    private static final String DB_URL_POST = "?useUnicode=true&characterEncoding=utf-8";
+    private static final String DB_URL_POST = "?useUnicode=true&characterEncoding=utf-8&useSSL=false";
     private static final String TABLE_NAME = "shares_info";
     private static final String USER_NAME = "root";
     private static final String PASS_WD = "123456";

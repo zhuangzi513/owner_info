@@ -139,6 +139,8 @@ public class SharesInfoDBHelper {
                 mDBConnection = DriverManager.getConnection(mDBUrl, USER_NAME, PASS_WD);
             } catch (SQLException se){
                 //sLog.log(Level.INFO, "Fail to connect to :" + mDBUrl);
+                System.out.println("Fail to connect to :" + mDBUrl);
+                tryCreateDatabase();
                 continue;
             } catch (ClassNotFoundException e) {
                 //sLog.log(Level.INFO, e.getMessage());
@@ -258,7 +260,7 @@ public class SharesInfoDBHelper {
                 }
 
             } else {
-                System.out.println("Try to getTopTwoOwnerSharesRecord, but get 0 ShareItems");
+                //System.out.println("Try to getTopTwoOwnerSharesRecord, but get 0 ShareItems");
             }
         }
 

@@ -9,6 +9,7 @@ public class Main {
     private static String URL_POS = ".phtml";
     private static Map<String, Integer> S_TARGET_RESULTS_ORIGIN = new LinkedHashMap<String, Integer>();
     private static Map<String, Integer> S_TARGET_RESULTS_SORTED = new LinkedHashMap<String, Integer>();
+    private static Map<String, String> S_TARGET_RESULTS_DATES = new LinkedHashMap<String, String>();
 
     public static class MapValueComparator implements Comparator<Map.Entry<String, Integer>> {  
         public int compare(Entry<String, Integer> me1, Entry<String, Integer> me2) {  
@@ -34,7 +35,10 @@ public class Main {
          Iterator<Map.Entry<String, Integer>> entries = S_TARGET_RESULTS_SORTED.entrySet().iterator();  
          while (entries.hasNext()) {  
              Map.Entry<String, Integer> entry = entries.next();  
-             System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue());  
+             String newestDate = S_TARGET_RESULTS_DATES.get(entry.getKey());
+             if (newestDate.compareTo("2016-09-30") > 0) {
+                 System.out.println("股票ＩＤ = " + entry.getKey() + " 新进股东持仓= " + entry.getValue() / 100.0f + "%" + " 最新统计日期:" + newestDate);  
+             }
          }  
     }
 
@@ -53,7 +57,7 @@ public class Main {
     }
 
     private static void getSumOfFlesh(String databaseName) {
-        System.out.println("beginning id: " + databaseName);
+        //System.out.println("beginning id: " + databaseName);
         SharesInfoDBHelper dbHelper = new SharesInfoDBHelper(databaseName);
         OwnerShareBuilder.OwnerSharesRecord newRecord = new OwnerShareBuilder.OwnerSharesRecord(10);
         OwnerShareBuilder.OwnerSharesRecord oldRecord = new OwnerShareBuilder.OwnerSharesRecord(10);
@@ -61,8 +65,9 @@ public class Main {
         int flesh = OwnerSharesHelper.sumOfFlesh(newRecord, oldRecord);
         dbHelper.dispose();
 
-        if (flesh > 500) {
-            //System.out.println("TARGET: id: " + databaseName + " flesh: " + flesh);
+        if (flesh > 400) {
+            System.out.println("TARGET: id: " + databaseName + " flesh: " + flesh + " newestDate:" + newRecord.get(0).mDate);
+            S_TARGET_RESULTS_DATES.put(databaseName, newRecord.get(0).mDate);
             addToResults(databaseName, flesh);
         }
     }

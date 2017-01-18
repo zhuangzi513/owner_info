@@ -149,7 +149,7 @@ public class ReadHtml {
         }
 
         mSharesInfoDBHelper.connectDB();
-        mSharesInfoDBHelper.deleteRecords(THE_EXISTING_NEWEST_DATE);
+        //mSharesInfoDBHelper.deleteRecords(THE_EXISTING_NEWEST_DATE);
         OwnerShareBuilder.OwnerSharesRecord tipSharesRecord = mSharesInfoDBHelper.getTipOwnerSharesRecord();
         if (tipSharesRecord != null && tipSharesRecord.size() > 0) {
             mTipSavedDate = tipSharesRecord.get(0).mDate;
@@ -198,7 +198,7 @@ public class ReadHtml {
                                  //System.out.println("mTipSavedDate: " + mTipSavedDate);
                                  appedToShareInfos(date, td);
                              } else {
-                                 break;
+                                 return;
                              }
                          } else if (mState == BEGIN_COUNTING) {
                              //System.out.println("mState: set BUSY_COUNTING, " + mState + date);//（按照自己需要的格式输出）
